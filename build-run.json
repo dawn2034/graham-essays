@@ -1,7 +1,9 @@
 {
-  "status": "running",
+  "status": "failure",
   "run_id": 32404820408,
   "run_number": 1,
   "source_commit": "d1afbe88f7166652847eec059cef1a37edf4e122",
-  "started_at": "2026-08-20T18:44:18.853217+00:00"
+  "artifact_id": null,
+  "artifact_url": null,
+  "completed_at": "2026-08-20T18:46:55.988071+00:00"
 }
