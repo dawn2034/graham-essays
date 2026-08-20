@@ -85,7 +85,7 @@ pdf: validate metadata.yaml print-metadata.yaml print-header.tex
 		--no-highlight
 
 check: epub pdf
-	$(PYTHON) scripts/check_outputs.py \
+	$(VENV_PYTHON) scripts/check_outputs.py \
 		--epub graham.epub \
 		--pdf graham.pdf \
 		--title 'Paul Graham: Selected Essays' \
@@ -102,7 +102,14 @@ wordcount: validate
 	echo -n "Excluded articles: "
 	$(VENV_PYTHON) -c 'import json; print(len(json.load(open("selection.json", encoding="utf-8"))["excluded"]))'
 
-stage: check
+stage:
+	for file in graham.epub graham.pdf graham.md essays.csv excluded_essays.csv \
+		selection.json build_summary.json; do
+		test -f "$$file" || { echo "Missing validated build output: $$file" >&2; exit 1; }
+	done
+	test -f "$(LIVE_REPORTS)/validation.json" || { \
+		echo "Missing validation report: $(LIVE_REPORTS)/validation.json" >&2; exit 1; \
+	}
 	rm -rf dist/live
 	mkdir -p dist/live
 	cp graham.epub graham.pdf graham.md essays.csv excluded_essays.csv \
