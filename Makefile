@@ -1,64 +1,63 @@
 SHELL := /bin/bash
 
-.SILENT: clean venv fetch merge epub pdf
+PYTHON ?= .venv/bin/python
+PANDOC ?= pandoc
+OUTPUT_STEM := paul-graham-selected-essays
+EPUB := $(OUTPUT_STEM).epub
+PDF := $(OUTPUT_STEM).pdf
+MARKDOWN_READER := markdown+footnotes+smart-tex_math_dollars
 
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Darwin)
-PKG_MANAGER := brew
-VENV_ACTIVATE := source .venv/bin/activate
-else ifeq ($(UNAME_S),Linux)
-PKG_MANAGER := apt
-VENV_ACTIVATE := . ./.venv/bin/activate
-else
-$(error Unsupported operating system: $(UNAME_S))
-endif
+.PHONY: all clean venv fetch merge epub pdf validate stage wordcount
 
-all: dependencies clean venv fetch merge epub wordcount
+all: clean venv fetch merge epub pdf validate stage wordcount
 
 clean:
-	@echo "🗑 Cleaning up the room..."
-	rm -rf essays .venv graham.epub graham.md ; true
-
-merge:
-	@echo "🌪 Merging articles..."
-	pandoc essays/*.md -o graham.md -f markdown
-
-install:
-	$(PKG_MANAGER) install python3
+	@echo "Cleaning generated files..."
+	rm -rf essays .venv dist graham.md $(EPUB) $(PDF) essays.csv excluded_essays.csv edition-summary.json build-validation.json
 
 venv:
-	@echo "🐍 Creating a safe place for a Python... "
-	mkdir -p essays
-	uv venv .venv
-	$(VENV_ACTIVATE) && uv pip install --upgrade pip setuptools
-	$(VENV_ACTIVATE) && uv pip install -r requirements.txt
+	@echo "Creating Python environment..."
+	python3 -m venv .venv
+	$(PYTHON) -m pip install --upgrade pip
+	$(PYTHON) -m pip install -r requirements.txt
 
 fetch:
-	@echo "🧠 Downloading Paul Graham mind... "
-	$(VENV_ACTIVATE) && python3 graham.py
+	@echo "Downloading and filtering essays..."
+	$(PYTHON) graham.py
+
+merge:
+	@echo "Merging selected Markdown..."
+	test -n "$$(find essays -maxdepth 1 -name '*.md' -print -quit)"
+	$(PANDOC) essays/*.md -o graham.md -f '$(MARKDOWN_READER)' -t gfm --wrap=none
 
 epub: merge
-	@echo "📒 Binding EPUB... "
-	pandoc essays/*.md -o graham.epub -t epub3 -f markdown --metadata-file=metadata.yaml --toc --toc-depth=1 --epub-cover-image=cover.png --css=epub.css
-	python3 scripts/fix_epub_ibooks.py graham.epub
-	@echo "🎉 EPUB file created."
+	@echo "Building reflowable EPUB3..."
+	$(PANDOC) essays/*.md -o $(EPUB) \
+		-f '$(MARKDOWN_READER)' -t epub3 \
+		--metadata-file=metadata.yaml --toc --toc-depth=1 \
+		--split-level=1 --epub-cover-image=cover.png --css=epub.css
+	$(PYTHON) scripts/fix_epub_ibooks.py $(EPUB)
 
-pdf: epub
-	@echo "📒 Binding PDF... "
-	ebook-convert graham.epub graham.pdf
-	@echo "🎉 PDF file created."
+pdf: merge
+	@echo "Building A5 duplex print PDF..."
+	$(PANDOC) essays/*.md -o $(PDF) \
+		-f '$(MARKDOWN_READER)' --pdf-engine=xelatex \
+		--metadata-file=metadata.yaml --toc --toc-depth=1 \
+		--top-level-division=chapter --include-in-header=print-header.tex \
+		--listings \
+		-V documentclass=book -V classoption=openany -V classoption=twoside \
+		-V fontsize=11pt -V papersize=a5 -V colorlinks=false
 
-dependencies:
-	if [ "$(UNAME_S)" = "Darwin" ]; then \
-		$(PKG_MANAGER) install python pandoc calibre uv || true; \
-	else \
-		sudo apt update && sudo apt install -y python3-pip python3-venv pandoc calibre; \
-		curl -LsSf https://astral.sh/uv/install.sh | sh; \
-	fi
+validate: epub pdf
+	@echo "Validating selection and book files..."
+	$(PYTHON) scripts/validate_outputs.py
+
+ebook: epub pdf
+
+stage: validate
+	mkdir -p dist
+	cp $(EPUB) $(PDF) essays.csv excluded_essays.csv edition-summary.json build-validation.json dist/
 
 wordcount:
-	@echo "📊 Counting words..."
-	@echo "Total words: "
-	@cat essays/*.md | wc -w
-	@echo "Total articles: "
-	@ls essays/*.md | wc -l
+	@printf "Selected essays: "; find essays -maxdepth 1 -name '*.md' | wc -l
+	@printf "Words: "; cat essays/*.md | wc -w

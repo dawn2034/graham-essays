@@ -1,43 +1,79 @@
-# Graham Essays Collection
-[![CI](https://github.com/ofou/graham-essays/actions/workflows/main.yml/badge.svg)](https://github.com/ofou/graham-essays/actions/workflows/main.yml) [![Ubuntu](https://github.com/ofou/graham-essays/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/ofou/graham-essays/actions/workflows/ubuntu.yml) [![wakatime](https://wakatime.com/badge/github/ofou/graham-essays.svg?style=social)](https://wakatime.com/badge/github/ofou/graham-essays)
+# Paul Graham Essays - Selected Reader's Edition
 
-![https://startupquote.com/post/3890222281](https://64.media.tumblr.com/tumblr_li4p22jETB1qz6pqio1_500.png)
+This fork builds a deliberately selected edition of Paul Graham's essays in two formats:
 
-> "If you are not embarrassed by the first version of your product, you've launched too late".
+- a reflowable EPUB3 for e-readers;
+- an A5, duplex-aware PDF typeset directly from Markdown for paper reading.
 
----
+The canonical source remains [Paul Graham's essay index](https://paulgraham.com/articles.html). Selection is controlled by [`selection.json`](selection.json). The 29 configured titles are omitted; every other title is included, and newly published essays are included by default.
 
-**Check out the [releases page] for the latest build, updated daily.**
+## Current selection baseline
 
-Download the _complete collection_ of +200 essays from [Paul Graham] website and export them in [EPUB], and Markdown for easy [AFK] reading. It turned out to be a whooping +500k words. I used the RSS originally made by [Aaron Swartz] [shared] by PG himself, `feedparser`, `html2text`, `htmldate` and `Unidecode` libraries for data cleaning and acquisition. 
+At the 2026-06-15 source baseline:
 
-## Dependencies for MacOS
+- 233 essays on the official index;
+- 29 configured exclusions;
+- 204 essays in this edition.
 
-On macOS you need [brew] in order to install the dependencies listed in the Makefile.
+The scraper verifies every configured exclusion against the live index and fails if any title no longer matches. It also fails if any included essay cannot be downloaded, so a successful build cannot silently ship a partial book.
 
-## Usage
+## Build
 
-Run the [Makefile](./Makefile) in the root directory using:
+System dependencies on Debian/Ubuntu:
 
 ```bash
-make
+sudo apt-get update
+sudo apt-get install -y \
+  python3-venv pandoc texlive-xetex texlive-latex-extra \
+  fonts-noto-core fonts-dejavu-core poppler-utils
 ```
 
-### Current Essays
+Then run:
 
-Here's a [list] of the current essays included, and an [EPUB].
+```bash
+make all
+```
 
----
+Outputs are staged in `dist/`:
 
-_If you have any ideas, suggestions, curses or feedback in order to improve the code, please don't hesitate in opening an issue or PR. They'll be very welcomed!_
+- `paul-graham-selected-essays.epub`
+- `paul-graham-selected-essays.pdf`
+- `essays.csv`
+- `excluded_essays.csv`
+- `edition-summary.json`
+- `build-validation.json`
 
-[afk]: https://www.grammarly.com/blog/afk-meaning/
-[paul graham]: http://www.paulgraham.com/articles.html
-[aaron swartz]: https://en.wikipedia.org/wiki/Aaron_Swartz
-[brew]: https://docs.brew.sh/Installation
-[pandoc]: https://pandoc.org/installing.html
-[calibre]: https://calibre-ebook.com/
-[EPUB]: https://github.com/ofou/graham-essays/releases/download/latest/graham.epub
-[releases page]: https://github.com/ofou/graham-essays/releases
-[shared]: http://www.paulgraham.com/rss.html
-[list]: https://github.com/ofou/graham-essays/releases/download/latest/essays.csv
+## Typography
+
+### EPUB
+
+The EPUB is reflowable and uses relative sizing. It requests a book-serif stack (`Literata`, `Charis SIL`, `Noto Serif`, `Georgia`) without embedding or forcing a font, and it avoids fixed text/background colors so Apple Books, Kindle and other readers can apply their own themes. Paragraph spacing and a 1.55 line-height are tuned for screen reading.
+
+### PDF
+
+The PDF is built directly with XeLaTeX rather than converted from EPUB:
+
+- ISO A5, mirrored margins for duplex printing;
+- Noto Serif, 11 pt body text;
+- 22 mm inner and 17 mm outer margins;
+- restrained 1.16 line spacing and traditional paragraph indentation;
+- essay title on odd-page running heads, author on even pages;
+- page numbers at the outside edge;
+- one essay begins on a fresh page, without forcing blank recto pages;
+- monochrome links and embedded/subset fonts.
+
+## Validation
+
+`make validate` checks:
+
+- the live source count, inclusion count and all 29 exclusions;
+- EPUB ZIP invariants, metadata and table of contents;
+- absence of excluded titles from EPUB navigation;
+- A5 PDF page size, bookmarks, and embedded fonts;
+- presence of every included essay in EPUB navigation and PDF bookmarks.
+
+The build intentionally disables Pandoc's dollar-delimited math parser, because ordinary currency expressions in essays must remain text rather than accidental TeX.
+
+## Rights
+
+The essays remain copyright Paul Graham. This repository provides build tooling for a personal reader's edition and is not an official publication.

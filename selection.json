@@ -1,0 +1,46 @@
+{
+  "edition": "Selected Essays",
+  "source_index": "https://paulgraham.com/articles.html",
+  "minimum_source_count": 233,
+  "expected_exclusion_count": 29,
+  "policy": "All essays are included unless their normalized title appears below. Newly published essays are included by default.",
+  "groups": {
+    "fundraising_and_venture_capital": [
+      "How to Raise Money",
+      "How to Convince Investors",
+      "Investor Herd Dynamics",
+      "High Resolution Fundraising",
+      "A Fundraising Survival Guide",
+      "How to Be an Angel Investor",
+      "The New Funding Landscape",
+      "Founder Control"
+    ],
+    "lisp_and_arc_technical_history": [
+      "The Roots of Lisp",
+      "If Lisp Is So Great",
+      "What Made Lisp Different",
+      "Lisp for Web-Based Applications",
+      "Why Arc Isn't Especially Object-Oriented",
+      "The Hundred-Year Language"
+    ],
+    "dated_technology_commentary": [
+      "Web 2.0",
+      "Microsoft Is Dead",
+      "Return of the Mac",
+      "Why Twitter Is a Big Deal",
+      "Apple's Mistake",
+      "What Happened to Yahoo",
+      "Tablets",
+      "The Future of Web Startups"
+    ],
+    "politics_culture_and_tax": [
+      "The Origins of Wokeness",
+      "Economic Inequality",
+      "Modeling a Wealth Tax",
+      "How to Convert Between Wealth and Income Tax",
+      "The Four Quadrants of Conformism",
+      "Orthodox Privilege",
+      "The Two Kinds of Moderate"
+    ]
+  }
+}

@@ -1,0 +1,125 @@
+name: Build selected EPUB and print PDF
+
+"on":
+  push:
+    branches:
+      - selected-paper-edition
+    paths:
+      - '.github/workflows/selected-edition.yml'
+      - 'selection.json'
+      - 'graham.py'
+      - 'Makefile'
+      - 'metadata.yaml'
+      - 'epub.css'
+      - 'print-header.tex'
+      - 'requirements.txt'
+      - 'scripts/**'
+      - 'cover.png'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: selected-edition-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record running build
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          data = {
+              "status": "running",
+              "run_id": int(os.environ["RUN_ID"]),
+              "run_number": int(os.environ["RUN_NUMBER"]),
+              "source_commit": os.environ["COMMIT_SHA"],
+              "started_at": datetime.now(timezone.utc).isoformat(),
+          }
+          with open("build-run.json", "w", encoding="utf-8") as f:
+              json.dump(data, f, indent=2)
+              f.write("\n")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add build-run.json
+          git commit -m "chore: record running selected-edition build [skip ci]"
+          git push origin HEAD:selected-paper-edition
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-venv pandoc texlive-xetex texlive-latex-extra \
+            fonts-noto-core fonts-dejavu-core poppler-utils
+
+      - name: Build selected edition
+        run: make all
+
+      - name: Render PDF proof pages
+        run: |
+          mkdir -p dist/proofs
+          PAGE_COUNT=$(pdfinfo paul-graham-selected-essays.pdf | awk '/^Pages:/ {print $2}')
+          MID_PAGE=$(( PAGE_COUNT / 2 ))
+          LAST_PAGE=$PAGE_COUNT
+          pdftoppm -f 1 -singlefile -png -r 140 \
+            paul-graham-selected-essays.pdf dist/proofs/title-page
+          pdftoppm -f 3 -singlefile -png -r 140 \
+            paul-graham-selected-essays.pdf dist/proofs/toc-sample
+          pdftoppm -f "$MID_PAGE" -singlefile -png -r 140 \
+            paul-graham-selected-essays.pdf dist/proofs/middle-page
+          pdftoppm -f "$LAST_PAGE" -singlefile -png -r 140 \
+            paul-graham-selected-essays.pdf dist/proofs/last-page
+
+      - name: Upload complete build
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: paul-graham-selected-edition
+          path: dist/
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Publish terminal build status
+        if: always()
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}
+          COMMIT_SHA: ${{ github.sha }}
+          JOB_STATUS: ${{ job.status }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          artifact_id = os.environ.get("ARTIFACT_ID", "").strip()
+          data = {
+              "status": os.environ["JOB_STATUS"],
+              "run_id": int(os.environ["RUN_ID"]),
+              "run_number": int(os.environ["RUN_NUMBER"]),
+              "source_commit": os.environ["COMMIT_SHA"],
+              "artifact_id": int(artifact_id) if artifact_id else None,
+              "artifact_url": os.environ.get("ARTIFACT_URL") or None,
+              "completed_at": datetime.now(timezone.utc).isoformat(),
+          }
+          with open("build-run.json", "w", encoding="utf-8") as f:
+              json.dump(data, f, indent=2)
+              f.write("\n")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add build-run.json
+          git commit -m "chore: record selected-edition build result [skip ci]"
+          git push origin HEAD:selected-paper-edition
