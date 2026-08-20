@@ -20,6 +20,9 @@ A live build produces:
 - `essays.csv` - included essays in chronological order.
 - `excluded_essays.csv` - exclusion audit with title, category, URL, and status.
 
+GitHub Actions stages the validated deliverables and inspection reports under
+`dist/live/` and uploads them as `paul-graham-selected-edition`.
+
 ## Typography
 
 ### EPUB
