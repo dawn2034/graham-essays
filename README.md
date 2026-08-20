@@ -1,43 +1,84 @@
-# Graham Essays Collection
-[![CI](https://github.com/ofou/graham-essays/actions/workflows/main.yml/badge.svg)](https://github.com/ofou/graham-essays/actions/workflows/main.yml) [![Ubuntu](https://github.com/ofou/graham-essays/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/ofou/graham-essays/actions/workflows/ubuntu.yml) [![wakatime](https://wakatime.com/badge/github/ofou/graham-essays.svg?style=social)](https://wakatime.com/badge/github/ofou/graham-essays)
+# Paul Graham: Selected Essays
 
-![https://startupquote.com/post/3890222281](https://64.media.tumblr.com/tumblr_li4p22jETB1qz6pqio1_500.png)
+This fork builds a deliberately narrow **selected reading edition** from Paul
+Graham's current essay index. It excludes exactly the 29 titles explicitly
+classified as safe to skip in the accompanying reading guide. The auditable
+boundary lives in [`selection.json`](selection.json); lower-priority essays are
+otherwise retained.
 
-> "If you are not embarrassed by the first version of your product, you've launched too late".
+At the 2026-06-15 upstream baseline, the complete index contains 233 items, so
+this policy produces 204 included items. Later essays are included by default
+unless they are intentionally added to the exclusion manifest.
 
----
+## Outputs
 
-**Check out the [releases page] for the latest build, updated daily.**
+A live build produces:
 
-Download the _complete collection_ of +200 essays from [Paul Graham] website and export them in [EPUB], and Markdown for easy [AFK] reading. It turned out to be a whooping +500k words. I used the RSS originally made by [Aaron Swartz] [shared] by PG himself, `feedparser`, `html2text`, `htmldate` and `Unidecode` libraries for data cleaning and acquisition. 
+- `graham.epub` - reflowable EPUB 3 for Apple Books and other readers.
+- `graham.pdf` - A5, duplex-aware PDF intended for paper reading.
+- `graham.md` - merged Markdown source.
+- `essays.csv` - included essays in chronological order.
+- `excluded_essays.csv` - exclusion audit with title, category, URL, and status.
 
-## Dependencies for MacOS
+## Typography
 
-On macOS you need [brew] in order to install the dependencies listed in the Makefile.
+### EPUB
 
-## Usage
+The EPUB keeps the base size adjustable and uses a serif fallback stack
+(Literata, Charis SIL, Noto Serif, Georgia), 1.55 line spacing, modest first-line
+indents, restrained headings, and no fixed foreground/background colors. Fonts
+are not embedded, allowing device themes and accessibility controls to work.
+The Apple Books display-options file is patched so dark mode does not produce
+invisible text.
 
-Run the [Makefile](./Makefile) in the root directory using:
+### PDF
+
+The PDF is typeset directly from Markdown through XeLaTeX rather than converted
+from EPUB. Its print settings are:
+
+- A5 paper, two-sided layout, chapters allowed to start on either side.
+- Noto Serif 11 pt body, microtypography, and moderate leading.
+- 22 mm inner / 17 mm outer margins, with 18 mm top / 20 mm bottom margins.
+- Outside page numbers, restrained running heads, real page footnotes.
+- Widow/orphan control, robust URL/code wrapping, and one essay per new page.
+
+## Build
+
+Install OS dependencies once on Ubuntu/Debian:
+
+```bash
+make bootstrap
+```
+
+Then build the live edition:
 
 ```bash
 make
 ```
 
-### Current Essays
+The live build needs network access to `paulgraham.com`. Individual targets:
 
-Here's a [list] of the current essays included, and an [EPUB].
+```bash
+make venv
+make fetch
+make validate
+make epub
+make pdf
+make check
+```
 
----
+## Selection guarantees
 
-_If you have any ideas, suggestions, curses or feedback in order to improve the code, please don't hesitate in opening an issue or PR. They'll be very welcomed!_
+- Title matching is Unicode-, whitespace-, apostrophe-, and case-normalized.
+- Source files are cleared before every fetch, preventing stale essays from
+  surviving a changed selection.
+- The build fails if any of the 29 configured exclusions is absent from the
+  downloaded index or leaks into the included table of contents.
+- Article numbering is regenerated after filtering and must remain contiguous.
 
-[afk]: https://www.grammarly.com/blog/afk-meaning/
-[paul graham]: http://www.paulgraham.com/articles.html
-[aaron swartz]: https://en.wikipedia.org/wiki/Aaron_Swartz
-[brew]: https://docs.brew.sh/Installation
-[pandoc]: https://pandoc.org/installing.html
-[calibre]: https://calibre-ebook.com/
-[EPUB]: https://github.com/ofou/graham-essays/releases/download/latest/graham.epub
-[releases page]: https://github.com/ofou/graham-essays/releases
-[shared]: http://www.paulgraham.com/rss.html
-[list]: https://github.com/ofou/graham-essays/releases/download/latest/essays.csv
+## Rights
+
+Essay copyrights remain with Paul Graham. The repository provides selection,
+retrieval, and typesetting code; it does not grant rights in the essay text.
+The build retains the repository's existing cover asset; its separate rights
+notice remains in the project history and upstream source.

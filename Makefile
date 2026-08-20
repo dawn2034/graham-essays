@@ -1,64 +1,110 @@
 SHELL := /bin/bash
+.ONESHELL:
+.NOTPARALLEL:
 
-.SILENT: clean venv fetch merge epub pdf
+PYTHON ?= python3
+PANDOC ?= pandoc
+PDF_ENGINE ?= xelatex
+VENV := .venv
+VENV_PYTHON := $(VENV)/bin/python
+VENV_PIP := $(VENV)/bin/pip
+LIVE_REPORTS := build-reports/live
 
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Darwin)
-PKG_MANAGER := brew
-VENV_ACTIVATE := source .venv/bin/activate
-else ifeq ($(UNAME_S),Linux)
-PKG_MANAGER := apt
-VENV_ACTIVATE := . ./.venv/bin/activate
-else
-$(error Unsupported operating system: $(UNAME_S))
-endif
+.PHONY: all bootstrap clean distclean venv fetch validate merge epub pdf check \
+        wordcount stage
 
-all: dependencies clean venv fetch merge epub wordcount
+all: clean venv fetch validate merge epub pdf check wordcount
 
-clean:
-	@echo "🗑 Cleaning up the room..."
-	rm -rf essays .venv graham.epub graham.md ; true
-
-merge:
-	@echo "🌪 Merging articles..."
-	pandoc essays/*.md -o graham.md -f markdown
-
-install:
-	$(PKG_MANAGER) install python3
-
-venv:
-	@echo "🐍 Creating a safe place for a Python... "
-	mkdir -p essays
-	uv venv .venv
-	$(VENV_ACTIVATE) && uv pip install --upgrade pip setuptools
-	$(VENV_ACTIVATE) && uv pip install -r requirements.txt
-
-fetch:
-	@echo "🧠 Downloading Paul Graham mind... "
-	$(VENV_ACTIVATE) && python3 graham.py
-
-epub: merge
-	@echo "📒 Binding EPUB... "
-	pandoc essays/*.md -o graham.epub -t epub3 -f markdown --metadata-file=metadata.yaml --toc --toc-depth=1 --epub-cover-image=cover.png --css=epub.css
-	python3 scripts/fix_epub_ibooks.py graham.epub
-	@echo "🎉 EPUB file created."
-
-pdf: epub
-	@echo "📒 Binding PDF... "
-	ebook-convert graham.epub graham.pdf
-	@echo "🎉 PDF file created."
-
-dependencies:
-	if [ "$(UNAME_S)" = "Darwin" ]; then \
-		$(PKG_MANAGER) install python pandoc calibre uv || true; \
-	else \
-		sudo apt update && sudo apt install -y python3-pip python3-venv pandoc calibre; \
-		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+bootstrap:
+	if command -v apt-get >/dev/null 2>&1; then
+		sudo apt-get update
+		sudo apt-get install -y \
+			python3-pip python3-venv pandoc \
+			texlive-xetex texlive-latex-extra texlive-fonts-recommended \
+			fonts-noto-core fonts-dejavu-core poppler-utils unzip
+	else
+		echo "bootstrap currently supports Debian/Ubuntu; install equivalent packages manually." >&2
+		exit 1
 	fi
 
-wordcount:
-	@echo "📊 Counting words..."
-	@echo "Total words: "
-	@cat essays/*.md | wc -w
-	@echo "Total articles: "
-	@ls essays/*.md | wc -l
+clean:
+	rm -rf essays essays.selected.tmp
+	rm -f essays.csv essays.selected.csv.tmp excluded_essays.csv build_summary.json
+	rm -f graham.md graham.epub graham.pdf fetch.log
+	rm -rf $(LIVE_REPORTS) dist/live
+
+# Remove dependencies and all staged artifacts as well.
+distclean: clean
+	rm -rf $(VENV) dist build-reports
+
+venv:
+	if [ ! -x "$(VENV_PYTHON)" ]; then
+		$(PYTHON) -m venv $(VENV)
+	fi
+	$(VENV_PYTHON) -m pip install --upgrade pip setuptools wheel
+	$(VENV_PIP) install -r requirements.txt
+
+fetch: venv
+	rm -rf essays essays.csv excluded_essays.csv build_summary.json fetch.log
+	mkdir -p essays
+	set -o pipefail
+	$(VENV_PYTHON) graham.py 2>&1 | tee fetch.log
+	if grep -Fq '❌' fetch.log; then
+		echo "The upstream scraper reported one or more failed downloads." >&2
+		exit 1
+	fi
+	$(VENV_PYTHON) scripts/apply_selection.py
+
+validate:
+	$(VENV_PYTHON) scripts/validate_selection.py
+
+merge: validate
+	cat essays/*.md > graham.md
+
+epub: validate metadata.yaml epub.css cover.png
+	$(PANDOC) essays/*.md \
+		--output=graham.epub \
+		--from=markdown+smart \
+		--to=epub3 \
+		--metadata-file=metadata.yaml \
+		--toc --toc-depth=1 \
+		--split-level=1 \
+		--epub-cover-image=cover.png \
+		--css=epub.css
+	$(PYTHON) scripts/fix_epub_ibooks.py graham.epub
+
+pdf: validate metadata.yaml print-metadata.yaml print-header.tex
+	$(PANDOC) essays/*.md \
+		--output=graham.pdf \
+		--from=markdown+smart \
+		--metadata-file=metadata.yaml \
+		--metadata-file=print-metadata.yaml \
+		--toc --toc-depth=1 \
+		--pdf-engine=$(PDF_ENGINE) \
+		--include-in-header=print-header.tex \
+		--no-highlight
+
+check: epub pdf
+	$(PYTHON) scripts/check_outputs.py \
+		--epub graham.epub \
+		--pdf graham.pdf \
+		--title 'Paul Graham: Selected Essays' \
+		--author 'Paul Graham' \
+		--essays-csv essays.csv \
+		--selection selection.json \
+		--audit excluded_essays.csv \
+		--summary build_summary.json \
+		--report-dir $(LIVE_REPORTS)
+
+wordcount: validate
+	echo "Total words: $$(cat essays/*.md | wc -w)"
+	echo "Included articles: $$(find essays -maxdepth 1 -name '*.md' | wc -l)"
+	echo -n "Excluded articles: "
+	$(VENV_PYTHON) -c 'import json; print(len(json.load(open("selection.json", encoding="utf-8"))["excluded"]))'
+
+stage: check
+	rm -rf dist/live
+	mkdir -p dist/live
+	cp graham.epub graham.pdf graham.md essays.csv excluded_essays.csv \
+		selection.json build_summary.json dist/live/
+	cp -a $(LIVE_REPORTS) dist/live/validation

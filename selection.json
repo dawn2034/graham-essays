@@ -1,0 +1,130 @@
+{
+  "edition": "Selected Essays",
+  "selection_note": "This edition omits the essays explicitly classified as safe to skip in the accompanying reading guide. The exclusions are intentionally narrow: lower-priority essays remain included unless they were named in the skip section.",
+  "expected_exclusion_count": 29,
+  "excluded": [
+    {
+      "title": "How to Raise Money",
+      "category": "fundraising_and_venture_capital"
+    },
+    {
+      "title": "How to Convince Investors",
+      "category": "fundraising_and_venture_capital"
+    },
+    {
+      "title": "Investor Herd Dynamics",
+      "category": "fundraising_and_venture_capital"
+    },
+    {
+      "title": "High Resolution Fundraising",
+      "category": "fundraising_and_venture_capital"
+    },
+    {
+      "title": "A Fundraising Survival Guide",
+      "category": "fundraising_and_venture_capital"
+    },
+    {
+      "title": "How to Be an Angel Investor",
+      "category": "fundraising_and_venture_capital"
+    },
+    {
+      "title": "The New Funding Landscape",
+      "category": "fundraising_and_venture_capital"
+    },
+    {
+      "title": "Founder Control",
+      "category": "fundraising_and_venture_capital"
+    },
+    {
+      "title": "The Roots of Lisp",
+      "category": "lisp_and_arc_technical_history"
+    },
+    {
+      "title": "If Lisp Is So Great",
+      "category": "lisp_and_arc_technical_history"
+    },
+    {
+      "title": "What Made Lisp Different",
+      "category": "lisp_and_arc_technical_history"
+    },
+    {
+      "title": "Lisp for Web-Based Applications",
+      "category": "lisp_and_arc_technical_history"
+    },
+    {
+      "title": "Why Arc Isn't Especially Object-Oriented",
+      "category": "lisp_and_arc_technical_history"
+    },
+    {
+      "title": "The Hundred-Year Language",
+      "category": "lisp_and_arc_technical_history"
+    },
+    {
+      "title": "Web 2.0",
+      "category": "dated_technology_commentary"
+    },
+    {
+      "title": "Microsoft Is Dead",
+      "category": "dated_technology_commentary"
+    },
+    {
+      "title": "Return of the Mac",
+      "category": "dated_technology_commentary"
+    },
+    {
+      "title": "Why Twitter Is a Big Deal",
+      "category": "dated_technology_commentary"
+    },
+    {
+      "title": "Apple's Mistake",
+      "category": "dated_technology_commentary"
+    },
+    {
+      "title": "What Happened to Yahoo",
+      "category": "dated_technology_commentary"
+    },
+    {
+      "title": "Tablets",
+      "category": "dated_technology_commentary"
+    },
+    {
+      "title": "The Future of Web Startups",
+      "category": "dated_technology_commentary"
+    },
+    {
+      "title": "The Origins of Wokeness",
+      "category": "politics_culture_and_tax"
+    },
+    {
+      "title": "Economic Inequality",
+      "category": "politics_culture_and_tax"
+    },
+    {
+      "title": "Modeling a Wealth Tax",
+      "category": "politics_culture_and_tax"
+    },
+    {
+      "title": "How to Convert Between Wealth and Income Tax",
+      "category": "politics_culture_and_tax"
+    },
+    {
+      "title": "The Four Quadrants of Conformism",
+      "category": "politics_culture_and_tax"
+    },
+    {
+      "title": "Orthodox Privilege",
+      "category": "politics_culture_and_tax"
+    },
+    {
+      "title": "The Two Kinds of Moderate",
+      "category": "politics_culture_and_tax"
+    }
+  ],
+  "baseline": {
+    "source_index_date": "2026-06-15",
+    "source_essay_count": 233,
+    "excluded_count": 29,
+    "included_count": 204,
+    "note": "Later source additions increase the included count unless explicitly added to the exclusion manifest."
+  }
+}

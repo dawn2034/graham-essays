@@ -1,0 +1,81 @@
+% Print-oriented settings for a long-form A5 anthology.
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{xurl}
+\usepackage{fvextra}
+\usepackage[fit]{truncate}
+
+\AtBeginDocument{\hypersetup{hidelinks}}
+\RecustomVerbatimEnvironment{verbatim}{Verbatim}{%
+  breaklines=true,%
+  breakanywhere=true,%
+  fontsize=\small%
+}
+\AtBeginDocument{%
+  \ifcsname Highlighting\endcsname
+    \RecustomVerbatimEnvironment{Highlighting}{Verbatim}{%
+      commandchars=\\\{\},%
+      breaklines=true,%
+      breakanywhere=true,%
+      fontsize=\small%
+    }%
+  \fi
+}
+\urlstyle{same}
+
+\setlength{\parindent}{1.25em}
+\setlength{\parskip}{0.16em plus 0.05em minus 0.03em}
+\linespread{1.08}
+\raggedbottom
+\emergencystretch=3em
+\frenchspacing
+
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+\brokenpenalty=5000
+
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries}
+  {}
+  {0pt}
+  {\raggedright\fontsize{22}{26}\selectfont}
+\titlespacing*{\chapter}{0pt}{0pt}{2.2\baselineskip}
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries}
+  {}
+  {0pt}
+  {}
+\titlespacing*{\section}{0pt}{2.0\baselineskip}{0.7\baselineskip}
+
+\titleformat{\subsection}
+  {\normalfont\large\bfseries}
+  {}
+  {0pt}
+  {}
+\titlespacing*{\subsection}{0pt}{1.6\baselineskip}{0.55\baselineskip}
+
+% A 200+ item table of contents should be compact, but still legible.
+\renewcommand{\cftchapfont}{\small\normalfont}
+\renewcommand{\cftchappagefont}{\small\normalfont}
+\setlength{\cftbeforechapskip}{0.18em}
+\renewcommand{\cftchapleader}{\cftdotfill{\cftdotsep}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE]{\small\itshape Paul Graham}
+\fancyhead[RO]{\small\itshape\truncate{0.70\textwidth}{\nouppercase{\leftmark}}}
+\fancyfoot[LE,RO]{\small\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0pt}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[LE,RO]{\small\thepage}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \renewcommand{\footrulewidth}{0pt}%
+}
