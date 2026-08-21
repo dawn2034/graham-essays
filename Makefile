@@ -1,64 +1,154 @@
 SHELL := /bin/bash
 
-.SILENT: clean venv fetch merge epub pdf
+.PHONY: all clean bootstrap venv cover fetch validate merge epub pdf pdf-a5 pdf-b5 pdf-a4 check wordcount sample sample-check sample-clean
+.SILENT: all clean bootstrap venv cover fetch validate merge epub pdf pdf-a5 pdf-b5 pdf-a4 check wordcount sample sample-check sample-clean
 
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Darwin)
-PKG_MANAGER := brew
-VENV_ACTIVATE := source .venv/bin/activate
-else ifeq ($(UNAME_S),Linux)
-PKG_MANAGER := apt
-VENV_ACTIVATE := . ./.venv/bin/activate
-else
-$(error Unsupported operating system: $(UNAME_S))
-endif
+PYTHON ?= python3
+VENV := .venv
+VENV_PY := $(VENV)/bin/python
+VENV_PIP := $(VENV)/bin/pip
+PANDOC ?= pandoc
+PDF_ENGINE ?= xelatex
+MARKDOWN_FORMAT ?= markdown-tex_math_dollars
 
-all: dependencies clean venv fetch merge epub wordcount
+PDF_A5 := graham-a5.pdf
+PDF_B5 := graham-b5.pdf
+PDF_A4 := graham-a4.pdf
+PDF_LEGACY := graham.pdf
+
+all: clean venv fetch validate merge epub pdf check wordcount
 
 clean:
-	@echo "🗑 Cleaning up the room..."
-	rm -rf essays .venv graham.epub graham.md ; true
+	@echo "Cleaning generated files..."
+	rm -rf essays dist cover.png graham.epub $(PDF_A5) $(PDF_B5) $(PDF_A4) $(PDF_LEGACY) \
+		graham.md essays.csv excluded_essays.csv build_summary.json
 
-merge:
-	@echo "🌪 Merging articles..."
-	pandoc essays/*.md -o graham.md -f markdown
-
-install:
-	$(PKG_MANAGER) install python3
-
-venv:
-	@echo "🐍 Creating a safe place for a Python... "
-	mkdir -p essays
-	uv venv .venv
-	$(VENV_ACTIVATE) && uv pip install --upgrade pip setuptools
-	$(VENV_ACTIVATE) && uv pip install -r requirements.txt
-
-fetch:
-	@echo "🧠 Downloading Paul Graham mind... "
-	$(VENV_ACTIVATE) && python3 graham.py
-
-epub: merge
-	@echo "📒 Binding EPUB... "
-	pandoc essays/*.md -o graham.epub -t epub3 -f markdown --metadata-file=metadata.yaml --toc --toc-depth=1 --epub-cover-image=cover.png --css=epub.css
-	python3 scripts/fix_epub_ibooks.py graham.epub
-	@echo "🎉 EPUB file created."
-
-pdf: epub
-	@echo "📒 Binding PDF... "
-	ebook-convert graham.epub graham.pdf
-	@echo "🎉 PDF file created."
-
-dependencies:
-	if [ "$(UNAME_S)" = "Darwin" ]; then \
-		$(PKG_MANAGER) install python pandoc calibre uv || true; \
+bootstrap:
+	@echo "Installing system dependencies (Ubuntu/Debian only)..."
+	@if command -v apt-get >/dev/null 2>&1; then \
+		sudo apt-get update && sudo apt-get install -y \
+			python3-pip python3-venv pandoc \
+			texlive-xetex texlive-latex-extra texlive-fonts-recommended \
+			fonts-noto-core fonts-dejavu-core poppler-utils unzip librsvg2-bin; \
 	else \
-		sudo apt update && sudo apt install -y python3-pip python3-venv pandoc calibre; \
-		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+		echo "Install Python 3, Pandoc, XeLaTeX, Noto fonts, Poppler, and unzip with your package manager."; \
 	fi
 
+venv:
+	@echo "Creating Python environment..."
+	@if [ ! -x "$(VENV_PY)" ]; then $(PYTHON) -m venv $(VENV); fi
+	$(VENV_PY) -m pip install --disable-pip-version-check --upgrade pip setuptools wheel
+	$(VENV_PIP) install --disable-pip-version-check -r requirements.txt
+
+cover:
+	@echo "Rendering the source cover..."
+	@if command -v rsvg-convert >/dev/null 2>&1; then \
+		rsvg-convert --width 2480 --height 3508 --output cover.png cover.svg; \
+	elif command -v inkscape >/dev/null 2>&1; then \
+		inkscape cover.svg --export-type=png --export-filename=cover.png \
+			--export-width=2480 --export-height=3508 >/dev/null; \
+	else \
+		echo "Install librsvg (rsvg-convert) or Inkscape to render cover.svg." >&2; \
+		exit 1; \
+	fi
+
+fetch: venv
+	@echo "Downloading the selected essay set..."
+	$(VENV_PY) graham.py
+
+validate: venv
+	@echo "Validating the selection boundary..."
+	$(VENV_PY) scripts/validate_selection.py
+
+merge:
+	@echo "Merging articles..."
+	$(PANDOC) essays/*.md -o graham.md -f $(MARKDOWN_FORMAT) --no-highlight
+
+epub: merge cover
+	@echo "Binding reflowable EPUB 3..."
+	$(PANDOC) essays/*.md -o graham.epub -t epub3 -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=metadata.yaml \
+		--toc --toc-depth=1 \
+		--epub-cover-image=cover.png \
+		--css=epub.css
+	$(PYTHON) scripts/fix_epub_ibooks.py graham.epub
+
+pdf: pdf-a5 pdf-b5 pdf-a4
+	@cp $(PDF_A5) $(PDF_LEGACY)
+	@echo "Print PDFs created: A5, B5, A4 (graham.pdf remains an A5 compatibility copy)."
+
+pdf-a5: merge cover
+	@echo "Typesetting print-oriented A5 PDF..."
+	$(PANDOC) essays/*.md -o $(PDF_A5) -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=metadata.yaml \
+		--metadata-file=print-metadata-a5.yaml \
+		--toc --toc-depth=1 \
+		--top-level-division=chapter \
+		--pdf-engine=$(PDF_ENGINE) \
+		--include-in-header=print-header.tex \
+		--include-in-header=print-cover.tex
+
+pdf-b5: merge cover
+	@echo "Typesetting print-oriented B5 PDF..."
+	$(PANDOC) essays/*.md -o $(PDF_B5) -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=metadata.yaml \
+		--metadata-file=print-metadata-b5.yaml \
+		--toc --toc-depth=1 \
+		--top-level-division=chapter \
+		--pdf-engine=$(PDF_ENGINE) \
+		--include-in-header=print-header.tex \
+		--include-in-header=print-cover.tex
+
+pdf-a4: merge cover
+	@echo "Typesetting print-oriented A4 PDF..."
+	$(PANDOC) essays/*.md -o $(PDF_A4) -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=metadata.yaml \
+		--metadata-file=print-metadata-a4.yaml \
+		--toc --toc-depth=1 \
+		--top-level-division=chapter \
+		--pdf-engine=$(PDF_ENGINE) \
+		--include-in-header=print-header.tex \
+		--include-in-header=print-cover.tex
+
+check: venv
+	@echo "Running structural and typography checks..."
+	$(VENV_PY) scripts/check_outputs.py \
+		--epub graham.epub \
+		--pdf-a5 $(PDF_A5) --pdf-b5 $(PDF_B5) --pdf-a4 $(PDF_A4) \
+		--included essays.csv --excluded excluded_essays.csv \
+		--manifest selection.json
+
 wordcount:
-	@echo "📊 Counting words..."
-	@echo "Total words: "
-	@cat essays/*.md | wc -w
-	@echo "Total articles: "
-	@ls essays/*.md | wc -l
+	@echo "Collection statistics"
+	@printf "Total words: "; cat essays/*.md | wc -w
+	@printf "Included articles: "; find essays -maxdepth 1 -name '*.md' | wc -l
+	@printf "Excluded articles: "; tail -n +2 excluded_essays.csv | wc -l
+
+sample: sample-clean cover
+	@echo "Building copyright-safe typography proofs..."
+	mkdir -p dist/sample
+	$(PANDOC) sample/*.md -o dist/sample/layout-proof.epub -t epub3 -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=sample/metadata.yaml \
+		--toc --toc-depth=1 \
+		--epub-cover-image=cover.png \
+		--css=epub.css
+	$(PYTHON) scripts/fix_epub_ibooks.py dist/sample/layout-proof.epub
+	$(PANDOC) sample/*.md -o dist/sample/layout-proof-a5.pdf -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=sample/metadata.yaml --metadata-file=print-metadata-a5.yaml \
+		--toc --toc-depth=1 --top-level-division=chapter --pdf-engine=$(PDF_ENGINE) \
+		--include-in-header=print-header.tex --include-in-header=print-cover.tex
+	$(PANDOC) sample/*.md -o dist/sample/layout-proof-b5.pdf -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=sample/metadata.yaml --metadata-file=print-metadata-b5.yaml \
+		--toc --toc-depth=1 --top-level-division=chapter --pdf-engine=$(PDF_ENGINE) \
+		--include-in-header=print-header.tex --include-in-header=print-cover.tex
+	$(PANDOC) sample/*.md -o dist/sample/layout-proof-a4.pdf -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=sample/metadata.yaml --metadata-file=print-metadata-a4.yaml \
+		--toc --toc-depth=1 --top-level-division=chapter --pdf-engine=$(PDF_ENGINE) \
+		--include-in-header=print-header.tex --include-in-header=print-cover.tex
+	$(PYTHON) scripts/check_layout_proof.py
+
+sample-check:
+	$(PYTHON) scripts/check_layout_proof.py
+
+sample-clean:
+	rm -rf dist/sample

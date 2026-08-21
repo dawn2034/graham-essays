@@ -19,3 +19,4 @@ tzdata
 tzlocal
 Unidecode
 urllib3
+PyMuPDF>=1.24,<2

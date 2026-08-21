@@ -1,250 +1,142 @@
-/* EPUB stylesheet for Apple Books (including iOS dark mode).
-   Avoid fixed text/background colors so the reader can apply themes. */
+/* Reflowable EPUB typography. No fonts or fixed text colors are embedded, so
+   reader themes, accessibility settings, and Apple Books dark mode work. */
 
-@page {
-  margin: 10px;
-}
-
-html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p,
-blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img,
-ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center,
-fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed, figure, figcaption, footer, header,
-hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video, ol,
-ul, li, dl, dt, dd {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-size: 100%;
-  vertical-align: baseline;
-}
+@page { margin: 0.65em; }
 
 html {
-  line-height: 1.2;
-  font-family: Georgia, serif;
   color-scheme: light dark;
+  font-family: "Literata", "Charis SIL", "Noto Serif", Georgia, serif;
+  font-size: 100%;
+  line-height: 1.55;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  text-rendering: optimizeLegibility;
 }
 
 p {
-  text-indent: 0;
-  margin: 1em 0;
-  widows: 2;
-  orphans: 2;
+  margin: 0.25em 0;
+  text-indent: 1.25em;
+  widows: 3;
+  orphans: 3;
 }
 
-img {
-  max-width: 100%;
-}
-
-sup {
-  vertical-align: super;
-  font-size: smaller;
-}
-
-sub {
-  vertical-align: sub;
-  font-size: smaller;
-}
+h1 + p,
+h2 + p,
+h3 + p,
+blockquote p:first-child,
+li p:first-child,
+.footnotes p { text-indent: 0; }
 
 h1 {
-  margin: 3em 0 0 0;
-  font-size: 2em;
+  margin: 0;
+  padding-top: 2.1em;
+  font-size: 1.7em;
+  line-height: 1.2;
+  font-weight: 700;
   page-break-before: always;
-  line-height: 150%;
+  break-before: page;
 }
 
 h2 {
-  margin: 1.5em 0 0 0;
-  font-size: 1.5em;
-  line-height: 135%;
+  margin: 1.75em 0 0.55em;
+  font-size: 1.32em;
+  line-height: 1.25;
 }
 
 h3 {
-  margin: 1.3em 0 0 0;
-  font-size: 1.3em;
-}
-
-h4 {
-  margin: 1.2em 0 0 0;
-  font-size: 1.2em;
-}
-
-h5 {
-  margin: 1.1em 0 0 0;
-  font-size: 1.1em;
-}
-
-h6 {
-  font-size: 1em;
+  margin: 1.45em 0 0.45em;
+  font-size: 1.14em;
+  line-height: 1.3;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  text-indent: 0;
   text-align: left;
-  font-weight: bold;
+  text-indent: 0;
   page-break-after: avoid;
+  break-after: avoid;
   page-break-inside: avoid;
-}
-
-ol, ul {
-  margin: 1em 0 0 1.7em;
-}
-
-li > ol, li > ul {
-  margin-top: 0;
+  break-inside: avoid;
 }
 
 blockquote {
-  margin: 1em 0 1em 1.7em;
+  margin: 1em 1.25em;
+  font-size: 0.96em;
+}
+
+blockquote p {
+  text-indent: 0;
+  margin: 0.5em 0;
+}
+
+ol, ul {
+  margin: 0.8em 0 0.8em 1.5em;
+  padding: 0;
+}
+
+li { margin: 0.22em 0; }
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1em auto;
+}
+
+hr {
+  width: 32%;
+  margin: 1.8em auto;
+  border: 0;
+  border-top: 1px solid currentColor;
+  opacity: 0.45;
+}
+
+code, pre {
+  font-family: "Iosevka", "IBM Plex Mono", Menlo, Consolas, monospace;
 }
 
 code {
-  font-family: Menlo, Monaco, 'Lucida Console', Consolas, monospace;
-  font-size: 85%;
-  margin: 0;
-  hyphens: manual;
+  font-size: 0.88em;
+  overflow-wrap: anywhere;
 }
 
 pre {
   margin: 1em 0;
-  overflow: auto;
+  font-size: 0.86em;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
-pre code {
-  padding: 0;
-  overflow: visible;
-  overflow-wrap: normal;
+sup, a.footnote-ref {
+  vertical-align: super;
+  font-size: 0.72em;
+  line-height: 0;
 }
 
-.sourceCode {
-  background-color: transparent;
-  overflow: visible;
+.footnotes {
+  margin-top: 2em;
+  font-size: 0.9em;
 }
 
-hr {
-  background-color: currentColor;
-  border: none;
-  height: 1px;
-  margin: 1em 0;
-}
-
-table {
-  margin: 1em 0;
-  border-collapse: collapse;
-  width: 100%;
-  overflow-x: auto;
-  display: block;
-}
-
-table caption {
-  margin-bottom: 0.75em;
-}
-
-tbody {
-  margin-top: 0.5em;
-  border-top: 1px solid currentColor;
-  border-bottom: 1px solid currentColor;
-}
-
-th, td {
-  padding: 0.25em 0.5em 0.25em 0.5em;
-}
-
-th {
-  border-top: 1px solid currentColor;
-}
+#TOC, nav#toc { line-height: 1.35; }
+#TOC ul, nav#toc ol { margin-left: 0; padding-left: 0; }
+#TOC li, nav#toc li { list-style: none; margin: 0.42em 0; }
+#TOC a:not(:hover), nav#toc a:not(:hover) { text-decoration: none; }
+a { color: inherit; }
 
 header {
-  margin-bottom: 4em;
+  margin: 3em 0 4em;
   text-align: center;
 }
-
-#TOC li {
-  list-style: none;
-}
-
-#TOC ul {
-  padding-left: 1.3em;
-}
-
-#TOC > ul {
-  padding-left: 0;
-}
-
-#TOC a:not(:hover) {
-  text-decoration: none;
-}
-
-code {
-  white-space: pre-wrap;
-}
-
-span.smallcaps {
-  font-variant: small-caps;
-}
-
-div.column {
-  display: inline-block;
-  vertical-align: top;
-  width: 50%;
-}
-
-div.hanging-indent {
-  margin-left: 1.5em;
-  text-indent: -1.5em;
-}
-
-ul.task-list {
-  list-style: none;
-}
-
-ul.task-list li input[type="checkbox"] {
-  width: 0.8em;
-  margin: 0 0.8em 0.2em -1.6em;
-  vertical-align: middle;
-}
-
-.display.math {
-  display: block;
-  text-align: center;
-  margin: 0.5rem auto;
-}
-
-h1.title { }
-p.author { }
-p.date { }
-
-nav#toc ol, nav#landmarks ol {
-  padding: 0;
-  margin-left: 1em;
-}
-
-nav#toc ol li, nav#landmarks ol li {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-}
-
-a.footnote-ref {
-  vertical-align: super;
-}
-
-em, em em em, em em em em em {
-  font-style: italic;
-}
-
-em em, em em em em {
-  font-style: normal;
-}
-
-q {
-  quotes: "“" "”" "‘" "’";
-}
+header .title { font-size: 2em; line-height: 1.15; }
+header .subtitle { margin-top: 0.7em; font-size: 1.05em; font-weight: normal; }
+header .author { margin-top: 2em; text-indent: 0; }
 
 @media screen {
-  /* Workaround for iBooks issue; see pandoc #6242 */
-  .sourceCode {
-    overflow: visible !important;
-    white-space: pre-wrap !important;
-  }
+  .sourceCode { overflow: visible !important; white-space: pre-wrap !important; }
 }

@@ -1,0 +1,24 @@
+---
+documentclass: book
+classoption:
+  - 11pt
+  - b5paper
+  - twoside
+  - openany
+papersize: b5
+mainfont: Noto Serif
+sansfont: Noto Sans
+monofont: DejaVu Sans Mono
+geometry:
+  - inner=24mm
+  - outer=20mm
+  - top=21mm
+  - bottom=23mm
+  - headheight=14pt
+  - headsep=7mm
+  - footskip=11mm
+colorlinks: false
+linkcolor: black
+urlcolor: black
+citecolor: black
+...

@@ -1,0 +1,24 @@
+---
+documentclass: book
+classoption:
+  - 12pt
+  - a4paper
+  - twoside
+  - openany
+papersize: a4
+mainfont: Noto Serif
+sansfont: Noto Sans
+monofont: DejaVu Sans Mono
+geometry:
+  - inner=30mm
+  - outer=25mm
+  - top=25mm
+  - bottom=28mm
+  - headheight=15pt
+  - headsep=8mm
+  - footskip=12mm
+colorlinks: false
+linkcolor: black
+urlcolor: black
+citecolor: black
+...

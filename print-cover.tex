@@ -1,0 +1,17 @@
+% Use the same original typographic cover in the print PDF.
+\usepackage{graphicx}
+\usepackage{eso-pic}
+
+\makeatletter
+\renewcommand{\maketitle}{%
+  \begin{titlepage}%
+    \thispagestyle{empty}%
+    \AddToShipoutPictureBG*{%
+      \AtPageLowerLeft{%
+        \includegraphics[width=\paperwidth,height=\paperheight]{cover.png}%
+      }%
+    }%
+    \null%
+  \end{titlepage}%
+}
+\makeatother

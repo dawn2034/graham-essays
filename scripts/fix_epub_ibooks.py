@@ -18,31 +18,39 @@ PATCHED = b"""<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
+def copy_info(info: zipfile.ZipInfo) -> zipfile.ZipInfo:
+    copied = zipfile.ZipInfo(filename=info.filename, date_time=info.date_time)
+    copied.compress_type = info.compress_type
+    copied.external_attr = info.external_attr
+    copied.internal_attr = info.internal_attr
+    copied.create_system = info.create_system
+    copied.comment = info.comment
+    copied.extra = info.extra
+    return copied
+
+
 def patch_epub(path: Path) -> None:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".epub") as tmp:
         tmp_path = Path(tmp.name)
 
-    with zipfile.ZipFile(path, "r") as zin, zipfile.ZipFile(
-        tmp_path, "w", compression=zipfile.ZIP_DEFLATED
-    ) as zout:
-        for info in zin.infolist():
-            data = (
-                PATCHED
-                if info.filename == DISPLAY_OPTIONS
-                else zin.read(info.filename)
-            )
-            new_info = zipfile.ZipInfo(
-                filename=info.filename,
-                date_time=info.date_time,
-            )
-            new_info.compress_type = info.compress_type
-            new_info.external_attr = info.external_attr
-            new_info.internal_attr = info.internal_attr
-            if info.filename == "mimetype":
-                new_info.compress_type = zipfile.ZIP_STORED
-            zout.writestr(new_info, data)
+    try:
+        with zipfile.ZipFile(path, "r") as source, zipfile.ZipFile(
+            tmp_path, "w", compression=zipfile.ZIP_DEFLATED
+        ) as target:
+            names = set(source.namelist())
+            for info in source.infolist():
+                data = PATCHED if info.filename == DISPLAY_OPTIONS else source.read(info)
+                copied = copy_info(info)
+                if info.filename == "mimetype":
+                    copied.compress_type = zipfile.ZIP_STORED
+                target.writestr(copied, data)
 
-    tmp_path.replace(path)
+            if DISPLAY_OPTIONS not in names:
+                target.writestr(DISPLAY_OPTIONS, PATCHED)
+
+        tmp_path.replace(path)
+    finally:
+        tmp_path.unlink(missing_ok=True)
 
 
 def main() -> int:
