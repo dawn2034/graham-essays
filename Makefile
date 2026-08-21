@@ -18,7 +18,7 @@ PDF_LEGACY := graham.pdf
 PDF_B5_VOL1 := graham-b5-vol1.pdf
 PDF_B5_VOL2 := graham-b5-vol2.pdf
 PDF_B5_VOL3 := graham-b5-vol3.pdf
-VOLUME_DIR := dist/volumes
+THEME_DIR := dist/theme-volumes
 
 all: clean venv fetch validate merge epub pdf pdf-b5-volumes check check-volumes wordcount
 
@@ -85,78 +85,47 @@ pdf: pdf-a5 pdf-b5 pdf-a4
 pdf-a5: merge cover
 	@echo "Typesetting print-oriented A5 PDF..."
 	$(PANDOC) essays/*.md -o $(PDF_A5) -f $(MARKDOWN_FORMAT) --no-highlight \
-		--metadata-file=metadata.yaml \
-		--metadata-file=print-metadata-a5.yaml \
-		--toc --toc-depth=1 \
-		--top-level-division=chapter \
+		--metadata-file=metadata.yaml --metadata-file=print-metadata-a5.yaml \
+		--toc --toc-depth=1 --top-level-division=chapter \
 		--pdf-engine=$(PDF_ENGINE) \
-		--include-in-header=print-header.tex \
-		--include-in-header=print-cover.tex
+		--include-in-header=print-header.tex --include-in-header=print-cover.tex
 
 pdf-b5: merge cover
 	@echo "Typesetting print-oriented B5 PDF..."
 	$(PANDOC) essays/*.md -o $(PDF_B5) -f $(MARKDOWN_FORMAT) --no-highlight \
-		--metadata-file=metadata.yaml \
-		--metadata-file=print-metadata-b5.yaml \
-		--toc --toc-depth=1 \
-		--top-level-division=chapter \
+		--metadata-file=metadata.yaml --metadata-file=print-metadata-b5.yaml \
+		--toc --toc-depth=1 --top-level-division=chapter \
 		--pdf-engine=$(PDF_ENGINE) \
-		--include-in-header=print-header.tex \
-		--include-in-header=print-cover.tex
+		--include-in-header=print-header.tex --include-in-header=print-cover.tex
 
 pdf-a4: merge cover
 	@echo "Typesetting print-oriented A4 PDF..."
 	$(PANDOC) essays/*.md -o $(PDF_A4) -f $(MARKDOWN_FORMAT) --no-highlight \
-		--metadata-file=metadata.yaml \
-		--metadata-file=print-metadata-a4.yaml \
-		--toc --toc-depth=1 \
-		--top-level-division=chapter \
+		--metadata-file=metadata.yaml --metadata-file=print-metadata-a4.yaml \
+		--toc --toc-depth=1 --top-level-division=chapter \
 		--pdf-engine=$(PDF_ENGINE) \
-		--include-in-header=print-header.tex \
-		--include-in-header=print-cover.tex
+		--include-in-header=print-header.tex --include-in-header=print-cover.tex
 
-volume-plan: pdf-b5 venv
-	@echo "Planning balanced B5 volume boundaries from the actual single-volume layout..."
-	rm -rf $(VOLUME_DIR)
-	mkdir -p $(VOLUME_DIR)
-	$(VENV_PY) scripts/plan_b5_volumes.py \
-		--pdf $(PDF_B5) \
-		--included essays.csv \
-		--essays-dir essays \
-		--output-dir $(VOLUME_DIR)
+volume-plan: validate
+	@echo "Preparing theme-oriented B5 three-volume plan..."
+	$(VENV_PY) scripts/build_theme_volumes.py
 
 pdf-b5-volumes: volume-plan
-	@echo "Typesetting B5 three-volume reading set..."
-	@files="$$(tr '\n' ' ' < $(VOLUME_DIR)/volume-1-files.txt)"; \
-	$(PANDOC) $$files -o $(PDF_B5_VOL1) -f $(MARKDOWN_FORMAT) --no-highlight \
-		--metadata-file=metadata.yaml \
-		--metadata-file=print-metadata-b5.yaml \
-		--metadata-file=$(VOLUME_DIR)/volume-1-metadata.yaml \
-		--toc --toc-depth=1 \
-		--top-level-division=chapter \
-		--pdf-engine=$(PDF_ENGINE) \
-		--include-in-header=print-header.tex \
-		--include-in-header=print-volume-cover.tex
-	@files="$$(tr '\n' ' ' < $(VOLUME_DIR)/volume-2-files.txt)"; \
-	$(PANDOC) $$files -o $(PDF_B5_VOL2) -f $(MARKDOWN_FORMAT) --no-highlight \
-		--metadata-file=metadata.yaml \
-		--metadata-file=print-metadata-b5.yaml \
-		--metadata-file=$(VOLUME_DIR)/volume-2-metadata.yaml \
-		--toc --toc-depth=1 \
-		--top-level-division=chapter \
-		--pdf-engine=$(PDF_ENGINE) \
-		--include-in-header=print-header.tex \
-		--include-in-header=print-volume-cover.tex
-	@files="$$(tr '\n' ' ' < $(VOLUME_DIR)/volume-3-files.txt)"; \
-	$(PANDOC) $$files -o $(PDF_B5_VOL3) -f $(MARKDOWN_FORMAT) --no-highlight \
-		--metadata-file=metadata.yaml \
-		--metadata-file=print-metadata-b5.yaml \
-		--metadata-file=$(VOLUME_DIR)/volume-3-metadata.yaml \
-		--toc --toc-depth=1 \
-		--top-level-division=chapter \
-		--pdf-engine=$(PDF_ENGINE) \
-		--include-in-header=print-header.tex \
-		--include-in-header=print-volume-cover.tex
+	@echo "Typesetting B5 Volume I — Thinking & Making..."
+	$(PANDOC) $(THEME_DIR)/vol1.md -o $(PDF_B5_VOL1) -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=metadata.yaml --metadata-file=print-metadata-b5.yaml --metadata-file=$(THEME_DIR)/vol1-metadata.yaml \
+		--toc --toc-depth=1 --top-level-division=chapter --pdf-engine=$(PDF_ENGINE) \
+		--include-in-header=print-header.tex --include-in-header=$(THEME_DIR)/vol1-cover.tex
+	@echo "Typesetting B5 Volume II — Work & Startups..."
+	$(PANDOC) $(THEME_DIR)/vol2.md -o $(PDF_B5_VOL2) -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=metadata.yaml --metadata-file=print-metadata-b5.yaml --metadata-file=$(THEME_DIR)/vol2-metadata.yaml \
+		--toc --toc-depth=1 --top-level-division=chapter --pdf-engine=$(PDF_ENGINE) \
+		--include-in-header=print-header.tex --include-in-header=$(THEME_DIR)/vol2-cover.tex
+	@echo "Typesetting B5 Volume III — Life & Judgment..."
+	$(PANDOC) $(THEME_DIR)/vol3.md -o $(PDF_B5_VOL3) -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=metadata.yaml --metadata-file=print-metadata-b5.yaml --metadata-file=$(THEME_DIR)/vol3-metadata.yaml \
+		--toc --toc-depth=1 --top-level-division=chapter --pdf-engine=$(PDF_ENGINE) \
+		--include-in-header=print-header.tex --include-in-header=$(THEME_DIR)/vol3-cover.tex
 
 check: venv
 	@echo "Running structural and typography checks..."
@@ -166,15 +135,13 @@ check: venv
 		--included essays.csv --excluded excluded_essays.csv \
 		--manifest selection.json
 
-check-volumes: venv pdf-b5-volumes
-	@echo "Checking the B5 three-volume set..."
-	$(VENV_PY) scripts/check_b5_volumes.py \
-		--plan $(VOLUME_DIR)/volume-plan.json \
+check-volumes: pdf-b5-volumes
+	@echo "Validating themed B5 volume set..."
+	$(VENV_PY) scripts/check_theme_volumes.py \
 		--included essays.csv \
-		--pdf $(PDF_B5_VOL1) \
-		--pdf $(PDF_B5_VOL2) \
-		--pdf $(PDF_B5_VOL3) \
-		--summary $(VOLUME_DIR)/volume-summary.json
+		--plan $(THEME_DIR)/theme-volume-plan.json \
+		--vol1 $(PDF_B5_VOL1) --vol2 $(PDF_B5_VOL2) --vol3 $(PDF_B5_VOL3) \
+		--summary-out $(THEME_DIR)/theme-volume-summary.json
 
 wordcount:
 	@echo "Collection statistics"
@@ -186,10 +153,8 @@ sample: sample-clean cover
 	@echo "Building copyright-safe typography proofs..."
 	mkdir -p dist/sample
 	$(PANDOC) sample/*.md -o dist/sample/layout-proof.epub -t epub3 -f $(MARKDOWN_FORMAT) --no-highlight \
-		--metadata-file=sample/metadata.yaml \
-		--toc --toc-depth=1 \
-		--epub-cover-image=cover.png \
-		--css=epub.css
+		--metadata-file=sample/metadata.yaml --toc --toc-depth=1 \
+		--epub-cover-image=cover.png --css=epub.css
 	$(PYTHON) scripts/fix_epub_ibooks.py dist/sample/layout-proof.epub
 	$(PANDOC) sample/*.md -o dist/sample/layout-proof-a5.pdf -f $(MARKDOWN_FORMAT) --no-highlight \
 		--metadata-file=sample/metadata.yaml --metadata-file=print-metadata-a5.yaml \

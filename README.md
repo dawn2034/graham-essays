@@ -1,111 +1,72 @@
 # Paul Graham: Selected Essays
 
-This repository builds a deliberately narrow **selected reading edition** from
-Paul Graham's current essay index. It excludes exactly the 29 titles classified
-as safe to skip in the accompanying reading guide. The auditable boundary lives
-in [`selection.json`](selection.json); essays that were merely lower priority
-remain included.
+This repository builds a deliberately narrow **selected reading edition** from Paul Graham's current essay index. It excludes exactly the 29 titles classified as safe to skip in the accompanying reading guide. The auditable exclusion boundary lives in [`selection.json`](selection.json); essays that were merely lower priority remain included.
 
-At the 2026-06-15 baseline, the source index contained 233 items. The declared
-policy therefore yielded 204 included items. Later essays are included by
-default unless they are intentionally added to the exclusion manifest.
+At the 2026-06-15 baseline, the source index contained 233 items. The declared policy therefore yielded 204 included items. Later essays are included by default unless they are intentionally added to the exclusion manifest.
 
 ## Outputs
 
-A live local build produces:
+A live build produces:
 
-- `graham.epub` - reflowable EPUB 3 for Apple Books and other readers;
-- `graham-a5.pdf` - compact duplex print edition;
-- `graham-b5.pdf` - ISO B5 duplex print edition;
-- `graham-a4.pdf` - A4 duplex print edition;
-- `graham-b5-vol1.pdf`, `graham-b5-vol2.pdf`, `graham-b5-vol3.pdf` - balanced
-  three-volume ISO B5 print set;
-- `graham.pdf` - compatibility copy of the A5 edition;
-- `graham.md` - merged Markdown source;
-- `essays.csv` - included essays in reading order;
-- `excluded_essays.csv` - exclusion audit with title, category, URL, and status;
-- `build_summary.json` - source, inclusion, and exclusion counts;
-- `dist/volumes/volume-plan.json` - exact three-volume boundaries and estimated
-  B5 content pages;
-- `dist/volumes/volume-summary.json` - final page counts for the three printed
-  volumes.
+- `graham.epub` — reflowable EPUB 3;
+- `graham-a5.pdf` — A5 duplex print edition;
+- `graham-b5.pdf` — single-volume ISO B5 edition;
+- `graham-a4.pdf` — A4 duplex print edition;
+- `graham-b5-vol1.pdf` — **Volume I: Thinking & Making**;
+- `graham-b5-vol2.pdf` — **Volume II: Work & Startups**;
+- `graham-b5-vol3.pdf` — **Volume III: Life & Judgment**;
+- `essays.csv`, `excluded_essays.csv`, `build_summary.json` — build audit files;
+- `dist/theme-volumes/theme-volume-plan.json` — per-essay theme allocation and classifier scores;
+- `dist/theme-volumes/theme-volume-summary.json` — validated page counts and volume ranges.
 
-The reading order is obtained by reversing the official source index, following
-the upstream project. It is broadly old-to-new but is **not guaranteed to be a
-strict chronological bibliography**, because the index also contains undated
-book chapters and other material.
+## Themed B5 three-volume edition
 
-## B5 three-volume print set
+The physical-reading edition is organized by editorial theme rather than by equal page counts:
 
-The three-volume set is intended for actual paper binding rather than screen
-reading. It preserves the selected edition's reading order, never splits an
-essay, and does **not** divide merely by article count.
+### Volume I — Thinking & Making
 
-The build first typesets the complete B5 edition, reads each essay's real PDF
-chapter start page from the document outline, and then chooses two essay
-boundaries that minimize the page-count spread across three volumes. Each
-volume is then typeset independently with its own title page, table of contents,
-page numbering, running heads, and PDF bookmarks.
+Learning, independent thought, new ideas, writing, programming, taste, design, creativity, expertise, and the craft of making things.
 
-This approach keeps book thickness close across all three volumes while
-remaining reproducible as Paul Graham publishes new essays. The exact ranges
-are therefore generated at build time and recorded in `b5-volume-plan.json`
-rather than hard-coded into the repository.
+### Volume II — Work & Startups
 
-For printing, 70 g/m² high-opacity off-white book or offset paper is a good
-starting point. At roughly one third of the single-volume B5 page count per
-book, ordinary PUR perfect binding is practical; sewn binding is preferable
-when available.
+Careers, projects, work habits, startup ideas, products, users, founders, growth, management, hiring, and company building.
 
-## Typography
+### Volume III — Life & Judgment
 
-### EPUB
+Time, identity, education, cities, family, wealth, culture, society, values, judgment, and reflective autobiographical writing.
 
-The EPUB keeps its base size adjustable and uses a serif fallback stack
-(Literata, Charis SIL, Noto Serif, Georgia), 1.55 line spacing, modest first-line
-indents, restrained headings, and no fixed foreground/background colors. Fonts
-are not embedded, allowing reader themes and accessibility controls to work.
-The Apple Books display-options file is patched so dark mode does not produce
-invisible text.
+Important essays are assigned explicitly in [`theme-volumes.json`](theme-volumes.json). Other essays are classified from their title and full text using auditable weighted theme vocabularies, so newly published essays can still be placed automatically. Theme grouping changes cross-volume order, but each volume preserves the original relative reading order of its essays.
 
-### Print PDFs
+Each volume has its own generated front-cover artwork at repository root: `vol_1.png`, `vol_2.png`, and `vol_3.png`. The artwork is inserted as page 1 of the corresponding PDF and is also published as a separate Release asset for printing workflows.
 
-All PDFs are typeset directly from Markdown through XeLaTeX rather than
-converted from EPUB. They share Noto Serif body text, microtypography, outside
-page numbers, restrained running heads, real page footnotes, widow/orphan
-control, robust URL and code wrapping, and one essay per new page.
+## Print typography
 
-- **A5:** 11 pt body; 22 mm inner / 17 mm outer margins; 18 mm top / 20 mm bottom.
-- **ISO B5:** 11 pt body; 24 mm inner / 20 mm outer margins; 21 mm top / 23 mm bottom.
-- **A4:** 12 pt body; 30 mm inner / 25 mm outer margins; 25 mm top / 28 mm bottom.
-- **B5 three-volume set:** same B5 typography and margins as the single-volume
-  edition, with independent title pages and contents for each volume.
+All print PDFs are typeset directly from Markdown through XeLaTeX rather than converted from EPUB. They use Noto Serif body text, microtypography, outside page numbers, restrained running heads, real page footnotes, widow/orphan control, robust URL/code wrapping, and one essay per new page.
 
-The cover is stored as editable SVG source and rendered to a high-resolution
-PNG during the single-volume build. The three-volume set uses a separate
-typographic title page that identifies Volume I, II, or III. `openany` is
-intentional: forcing every one of 200+ essays onto a right-hand page would add a
-large number of blank pages without improving readability.
+- **A5:** 11 pt; 22 mm inner / 17 mm outer; 18 mm top / 20 mm bottom.
+- **ISO B5:** 11 pt; 24 mm inner / 20 mm outer; 21 mm top / 23 mm bottom.
+- **A4:** 12 pt; 30 mm inner / 25 mm outer; 25 mm top / 28 mm bottom.
+- **B5 themed volumes:** the same B5 typography and margins, with independent covers, contents, page numbering, running heads, and bookmarks.
+
+For a physical copy, high-opacity off-white book/offset paper around 70 g/m² is a sensible starting point. Sewn binding is preferable; PUR perfect binding is also practical at three-volume thicknesses.
 
 ## Build
 
-Install OS dependencies once on Ubuntu/Debian:
+On Ubuntu/Debian, install dependencies once:
 
 ```bash
 make bootstrap
 ```
 
-Then build and validate the current selected edition, including the B5
-three-volume set:
+Then build and validate everything:
 
 ```bash
 make
 ```
 
-The live build needs network access to `paulgraham.com`. Individual targets:
+Useful individual targets:
 
 ```bash
-make venv
 make fetch
 make validate
 make epub
@@ -118,48 +79,33 @@ make check
 make check-volumes
 ```
 
-For offline, copyright-safe typography proofs containing only synthetic text:
+The live build needs network access to `paulgraham.com`.
+
+For copyright-safe typography proofs containing only synthetic text:
 
 ```bash
 make sample
 ```
 
-This creates and validates one EPUB plus A5, ISO B5, and A4 PDF proofs under
-`dist/sample/`.
+## Validation guarantees
 
-## Selection and output guarantees
-
-- Title matching is Unicode-, whitespace-, apostrophe-, and case-normalized.
-- Source files are cleared before every fetch, preventing stale essays from
-  surviving a changed selection.
-- The build fails if any configured exclusion is absent from the current index,
-  leaks into the included CSV, or appears in EPUB/PDF navigation.
+- The 29-title exclusion boundary is checked against the live source index.
+- Excluded titles cannot leak into the selected CSV, EPUB navigation, or single-volume PDF outlines.
 - Article numbering is regenerated after filtering and must remain contiguous.
-- EPUB validation checks its uncompressed mimetype, package metadata, Apple
-  Books font override, and one navigation entry per included essay.
-- PDF validation checks metadata, every page's declared paper size, embedded and
-  subset fonts, valid outlines, and one outline entry per included essay.
-- Three-volume validation checks that every volume is ISO B5, all fonts are
-  embedded/subset, each outline exactly matches its planned essay range, the
-  three outlines reconstruct `essays.csv` without gaps or duplicates, and the
-  final page-count spread remains within a bounded tolerance.
+- EPUB structure, metadata, Apple Books settings, and navigation are checked.
+- A5/B5/A4 page sizes, embedded/subset fonts, metadata, and outlines are checked.
+- The themed B5 validator checks ISO B5 sizing, font embedding, first-page cover artwork, per-volume outlines, exact all-essay coverage with no duplicates/omissions, and preservation of original relative order inside every volume.
 
-## Continuous integration and releases
+## Releases
 
-GitHub Actions builds the live edition and all three single-volume print sizes,
-builds and validates the B5 three-volume set, builds synthetic typography
-proofs, uploads the complete build as a workflow artifact, and publishes a
-GitHub Release on every source-changing push to `main`.
+On every source-changing push to `main`, GitHub Actions builds and validates the full selected edition and publishes a Release containing:
 
-Each release contains the EPUB; A5/B5/A4 single-volume PDFs; B5 Volume I, II,
-and III PDFs; selection and audit metadata; the generated volume plan and final
-volume page summary; and SHA-256 checksums.
-
-Scheduled and pull-request runs validate the same pipeline but do not publish a
-release.
+- EPUB;
+- A5/B5/A4 single-volume PDFs;
+- themed B5 Volumes I–III;
+- the three themed cover PNGs;
+- selection, classification, build, and checksum metadata.
 
 ## Rights
 
-Essay copyrights remain with Paul Graham. This repository provides selection,
-retrieval, and typesetting code; it does not grant rights in the essay text. The
-included cover is an original typographic design for this reading edition.
+Essay copyrights remain with Paul Graham. This repository provides selection, retrieval, and typesetting code; it does not grant rights in the essay text. The cover artwork was created specifically for this private-reading edition.
