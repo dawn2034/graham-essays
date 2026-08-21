@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
-.PHONY: all clean bootstrap venv cover fetch validate merge epub pdf pdf-a5 pdf-b5 pdf-a4 check wordcount sample sample-check sample-clean
-.SILENT: all clean bootstrap venv cover fetch validate merge epub pdf pdf-a5 pdf-b5 pdf-a4 check wordcount sample sample-check sample-clean
+.PHONY: all clean bootstrap venv cover fetch validate merge epub pdf pdf-a5 pdf-b5 pdf-a4 volume-plan pdf-b5-volumes check check-volumes wordcount sample sample-check sample-clean
+.SILENT: all clean bootstrap venv cover fetch validate merge epub pdf pdf-a5 pdf-b5 pdf-a4 volume-plan pdf-b5-volumes check check-volumes wordcount sample sample-check sample-clean
 
 PYTHON ?= python3
 VENV := .venv
@@ -15,12 +15,17 @@ PDF_A5 := graham-a5.pdf
 PDF_B5 := graham-b5.pdf
 PDF_A4 := graham-a4.pdf
 PDF_LEGACY := graham.pdf
+PDF_B5_VOL1 := graham-b5-vol1.pdf
+PDF_B5_VOL2 := graham-b5-vol2.pdf
+PDF_B5_VOL3 := graham-b5-vol3.pdf
+VOLUME_DIR := dist/volumes
 
-all: clean venv fetch validate merge epub pdf check wordcount
+all: clean venv fetch validate merge epub pdf pdf-b5-volumes check check-volumes wordcount
 
 clean:
 	@echo "Cleaning generated files..."
 	rm -rf essays dist cover.png graham.epub $(PDF_A5) $(PDF_B5) $(PDF_A4) $(PDF_LEGACY) \
+		$(PDF_B5_VOL1) $(PDF_B5_VOL2) $(PDF_B5_VOL3) \
 		graham.md essays.csv excluded_essays.csv build_summary.json
 
 bootstrap:
@@ -110,6 +115,49 @@ pdf-a4: merge cover
 		--include-in-header=print-header.tex \
 		--include-in-header=print-cover.tex
 
+volume-plan: pdf-b5 venv
+	@echo "Planning balanced B5 volume boundaries from the actual single-volume layout..."
+	rm -rf $(VOLUME_DIR)
+	mkdir -p $(VOLUME_DIR)
+	$(VENV_PY) scripts/plan_b5_volumes.py \
+		--pdf $(PDF_B5) \
+		--included essays.csv \
+		--essays-dir essays \
+		--output-dir $(VOLUME_DIR)
+
+pdf-b5-volumes: volume-plan
+	@echo "Typesetting B5 three-volume reading set..."
+	@files="$$(tr '\n' ' ' < $(VOLUME_DIR)/volume-1-files.txt)"; \
+	$(PANDOC) $$files -o $(PDF_B5_VOL1) -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=metadata.yaml \
+		--metadata-file=print-metadata-b5.yaml \
+		--metadata-file=$(VOLUME_DIR)/volume-1-metadata.yaml \
+		--toc --toc-depth=1 \
+		--top-level-division=chapter \
+		--pdf-engine=$(PDF_ENGINE) \
+		--include-in-header=print-header.tex \
+		--include-in-header=print-volume-cover.tex
+	@files="$$(tr '\n' ' ' < $(VOLUME_DIR)/volume-2-files.txt)"; \
+	$(PANDOC) $$files -o $(PDF_B5_VOL2) -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=metadata.yaml \
+		--metadata-file=print-metadata-b5.yaml \
+		--metadata-file=$(VOLUME_DIR)/volume-2-metadata.yaml \
+		--toc --toc-depth=1 \
+		--top-level-division=chapter \
+		--pdf-engine=$(PDF_ENGINE) \
+		--include-in-header=print-header.tex \
+		--include-in-header=print-volume-cover.tex
+	@files="$$(tr '\n' ' ' < $(VOLUME_DIR)/volume-3-files.txt)"; \
+	$(PANDOC) $$files -o $(PDF_B5_VOL3) -f $(MARKDOWN_FORMAT) --no-highlight \
+		--metadata-file=metadata.yaml \
+		--metadata-file=print-metadata-b5.yaml \
+		--metadata-file=$(VOLUME_DIR)/volume-3-metadata.yaml \
+		--toc --toc-depth=1 \
+		--top-level-division=chapter \
+		--pdf-engine=$(PDF_ENGINE) \
+		--include-in-header=print-header.tex \
+		--include-in-header=print-volume-cover.tex
+
 check: venv
 	@echo "Running structural and typography checks..."
 	$(VENV_PY) scripts/check_outputs.py \
@@ -117,6 +165,16 @@ check: venv
 		--pdf-a5 $(PDF_A5) --pdf-b5 $(PDF_B5) --pdf-a4 $(PDF_A4) \
 		--included essays.csv --excluded excluded_essays.csv \
 		--manifest selection.json
+
+check-volumes: venv pdf-b5-volumes
+	@echo "Checking the B5 three-volume set..."
+	$(VENV_PY) scripts/check_b5_volumes.py \
+		--plan $(VOLUME_DIR)/volume-plan.json \
+		--included essays.csv \
+		--pdf $(PDF_B5_VOL1) \
+		--pdf $(PDF_B5_VOL2) \
+		--pdf $(PDF_B5_VOL3) \
+		--summary $(VOLUME_DIR)/volume-summary.json
 
 wordcount:
 	@echo "Collection statistics"

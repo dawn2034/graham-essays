@@ -1,0 +1,20 @@
+% Dedicated title page for the three-volume B5 print set.
+\makeatletter
+\renewcommand{\maketitle}{%
+  \begin{titlepage}%
+    \thispagestyle{empty}%
+    \centering
+    \vspace*{0.16\paperheight}%
+    {\fontsize{13}{17}\selectfont\scshape Personal Reading Edition\par}%
+    \vspace{1.6cm}%
+    \rule{0.42\textwidth}{0.5pt}\par
+    \vspace{1.4cm}%
+    {\fontsize{28}{34}\selectfont\bfseries \@title\par}%
+    \vspace{1.2cm}%
+    {\Large \@author\par}%
+    \vfill
+    {\small ISO B5 \textbullet\ Three-volume print edition\par}%
+    \vspace*{0.08\paperheight}%
+  \end{titlepage}%
+}
+\makeatother

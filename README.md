@@ -18,16 +18,44 @@ A live local build produces:
 - `graham-a5.pdf` - compact duplex print edition;
 - `graham-b5.pdf` - ISO B5 duplex print edition;
 - `graham-a4.pdf` - A4 duplex print edition;
+- `graham-b5-vol1.pdf`, `graham-b5-vol2.pdf`, `graham-b5-vol3.pdf` - balanced
+  three-volume ISO B5 print set;
 - `graham.pdf` - compatibility copy of the A5 edition;
 - `graham.md` - merged Markdown source;
 - `essays.csv` - included essays in reading order;
 - `excluded_essays.csv` - exclusion audit with title, category, URL, and status;
-- `build_summary.json` - source, inclusion, and exclusion counts.
+- `build_summary.json` - source, inclusion, and exclusion counts;
+- `dist/volumes/volume-plan.json` - exact three-volume boundaries and estimated
+  B5 content pages;
+- `dist/volumes/volume-summary.json` - final page counts for the three printed
+  volumes.
 
 The reading order is obtained by reversing the official source index, following
 the upstream project. It is broadly old-to-new but is **not guaranteed to be a
 strict chronological bibliography**, because the index also contains undated
 book chapters and other material.
+
+## B5 three-volume print set
+
+The three-volume set is intended for actual paper binding rather than screen
+reading. It preserves the selected edition's reading order, never splits an
+essay, and does **not** divide merely by article count.
+
+The build first typesets the complete B5 edition, reads each essay's real PDF
+chapter start page from the document outline, and then chooses two essay
+boundaries that minimize the page-count spread across three volumes. Each
+volume is then typeset independently with its own title page, table of contents,
+page numbering, running heads, and PDF bookmarks.
+
+This approach keeps book thickness close across all three volumes while
+remaining reproducible as Paul Graham publishes new essays. The exact ranges
+are therefore generated at build time and recorded in `b5-volume-plan.json`
+rather than hard-coded into the repository.
+
+For printing, 70 g/m² high-opacity off-white book or offset paper is a good
+starting point. At roughly one third of the single-volume B5 page count per
+book, ordinary PUR perfect binding is practical; sewn binding is preferable
+when available.
 
 ## Typography
 
@@ -50,10 +78,12 @@ control, robust URL and code wrapping, and one essay per new page.
 - **A5:** 11 pt body; 22 mm inner / 17 mm outer margins; 18 mm top / 20 mm bottom.
 - **ISO B5:** 11 pt body; 24 mm inner / 20 mm outer margins; 21 mm top / 23 mm bottom.
 - **A4:** 12 pt body; 30 mm inner / 25 mm outer margins; 25 mm top / 28 mm bottom.
+- **B5 three-volume set:** same B5 typography and margins as the single-volume
+  edition, with independent title pages and contents for each volume.
 
 The cover is stored as editable SVG source and rendered to a high-resolution
-PNG during the build. It has nearly the same aspect ratio as A-series and ISO
-B5 paper, so it scales to each page size without material distortion. `openany` is
+PNG during the single-volume build. The three-volume set uses a separate
+typographic title page that identifies Volume I, II, or III. `openany` is
 intentional: forcing every one of 200+ essays onto a right-hand page would add a
 large number of blank pages without improving readability.
 
@@ -65,7 +95,8 @@ Install OS dependencies once on Ubuntu/Debian:
 make bootstrap
 ```
 
-Then build and validate the current selected edition:
+Then build and validate the current selected edition, including the B5
+three-volume set:
 
 ```bash
 make
@@ -81,7 +112,10 @@ make epub
 make pdf-a5
 make pdf-b5
 make pdf-a4
+make volume-plan
+make pdf-b5-volumes
 make check
+make check-volumes
 ```
 
 For offline, copyright-safe typography proofs containing only synthetic text:
@@ -105,14 +139,21 @@ This creates and validates one EPUB plus A5, ISO B5, and A4 PDF proofs under
   Books font override, and one navigation entry per included essay.
 - PDF validation checks metadata, every page's declared paper size, embedded and
   subset fonts, valid outlines, and one outline entry per included essay.
+- Three-volume validation checks that every volume is ISO B5, all fonts are
+  embedded/subset, each outline exactly matches its planned essay range, the
+  three outlines reconstruct `essays.csv` without gaps or duplicates, and the
+  final page-count spread remains within a bounded tolerance.
 
 ## Continuous integration and releases
 
-GitHub Actions builds the live edition and all three print sizes, validates the
-outputs, builds synthetic typography proofs, uploads the complete build as a
-workflow artifact, and publishes a GitHub Release on every source-changing push
-to `main`. Each release contains the EPUB, A5/B5/A4 PDFs, selection and audit
-metadata, the live build summary, and SHA-256 checksums.
+GitHub Actions builds the live edition and all three single-volume print sizes,
+builds and validates the B5 three-volume set, builds synthetic typography
+proofs, uploads the complete build as a workflow artifact, and publishes a
+GitHub Release on every source-changing push to `main`.
+
+Each release contains the EPUB; A5/B5/A4 single-volume PDFs; B5 Volume I, II,
+and III PDFs; selection and audit metadata; the generated volume plan and final
+volume page summary; and SHA-256 checksums.
 
 Scheduled and pull-request runs validate the same pipeline but do not publish a
 release.

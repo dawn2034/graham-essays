@@ -17,6 +17,7 @@ on:
       - 'print-metadata-*.yaml'
       - 'print-header.tex'
       - 'print-cover.tex'
+      - 'print-volume-cover.tex'
       - 'epub.css'
       - 'requirements.txt'
       - 'cover.svg'
@@ -71,14 +72,25 @@ jobs:
           cp graham-a5.pdf dist/release/Paul-Graham-Selected-Essays-A5.pdf
           cp graham-b5.pdf dist/release/Paul-Graham-Selected-Essays-B5.pdf
           cp graham-a4.pdf dist/release/Paul-Graham-Selected-Essays-A4.pdf
+          cp graham-b5-vol1.pdf dist/release/Paul-Graham-Selected-Essays-B5-Vol-1.pdf
+          cp graham-b5-vol2.pdf dist/release/Paul-Graham-Selected-Essays-B5-Vol-2.pdf
+          cp graham-b5-vol3.pdf dist/release/Paul-Graham-Selected-Essays-B5-Vol-3.pdf
           cp essays.csv excluded_essays.csv selection.json build_summary.json dist/release/
+          cp dist/volumes/volume-plan.json dist/release/b5-volume-plan.json
+          cp dist/volumes/volume-summary.json dist/release/b5-volume-summary.json
 
           pdfinfo graham-a5.pdf > dist/review/pdfinfo-a5.txt
           pdfinfo graham-b5.pdf > dist/review/pdfinfo-b5.txt
           pdfinfo graham-a4.pdf > dist/review/pdfinfo-a4.txt
+          pdfinfo graham-b5-vol1.pdf > dist/review/pdfinfo-b5-vol1.txt
+          pdfinfo graham-b5-vol2.pdf > dist/review/pdfinfo-b5-vol2.txt
+          pdfinfo graham-b5-vol3.pdf > dist/review/pdfinfo-b5-vol3.txt
           pdffonts graham-a5.pdf > dist/review/pdffonts-a5.txt
           pdffonts graham-b5.pdf > dist/review/pdffonts-b5.txt
           pdffonts graham-a4.pdf > dist/review/pdffonts-a4.txt
+          pdffonts graham-b5-vol1.pdf > dist/review/pdffonts-b5-vol1.txt
+          pdffonts graham-b5-vol2.pdf > dist/review/pdffonts-b5-vol2.txt
+          pdffonts graham-b5-vol3.pdf > dist/review/pdffonts-b5-vol3.txt
 
           (
             cd dist/release
@@ -86,7 +98,11 @@ jobs:
               Paul-Graham-Selected-Essays-A5.pdf \
               Paul-Graham-Selected-Essays-B5.pdf \
               Paul-Graham-Selected-Essays-A4.pdf \
+              Paul-Graham-Selected-Essays-B5-Vol-1.pdf \
+              Paul-Graham-Selected-Essays-B5-Vol-2.pdf \
+              Paul-Graham-Selected-Essays-B5-Vol-3.pdf \
               essays.csv excluded_essays.csv selection.json build_summary.json \
+              b5-volume-plan.json b5-volume-summary.json \
               > SHA256SUMS.txt
           )
 
@@ -97,17 +113,27 @@ jobs:
           from pathlib import Path
 
           summary = json.loads(Path('build_summary.json').read_text(encoding='utf-8'))
+          volumes = json.loads(
+              Path('dist/volumes/volume-summary.json').read_text(encoding='utf-8')
+          )
           date = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
           short_sha = os.environ['GITHUB_SHA'][:8]
           tag = f'selected-{date}-{short_sha}'
           name = f"Paul Graham: Selected Essays ({date})"
+          page_line = ", ".join(
+              f"Vol. {item['roman']}: {item['actual_pdf_pages']} pages"
+              for item in volumes['volumes']
+          )
           body = f"""A live build from Paul Graham's official essay index.
 
           - Included essays: {summary['included_count']}
           - Excluded essays: {summary['excluded_count']}
           - Source-index entries: {summary['source_index_count']}
-          - Formats: EPUB 3; print PDFs in A5, ISO B5, and A4
+          - Formats: EPUB 3; single-volume PDFs in A5, ISO B5, and A4
+          - B5 three-volume print set: {page_line}
           - Source commit: `{os.environ['GITHUB_SHA']}`
+
+          The three-volume B5 set preserves reading order, splits only between complete essays, and chooses boundaries from the actual typeset page spans of the full B5 edition. `b5-volume-plan.json` records the boundaries and `b5-volume-summary.json` records final page counts.
 
           `selection.json` records the exact exclusion boundary. `SHA256SUMS.txt` can be used to verify every release asset.
           """
@@ -143,8 +169,13 @@ jobs:
             dist/release/Paul-Graham-Selected-Essays-A5.pdf
             dist/release/Paul-Graham-Selected-Essays-B5.pdf
             dist/release/Paul-Graham-Selected-Essays-A4.pdf
+            dist/release/Paul-Graham-Selected-Essays-B5-Vol-1.pdf
+            dist/release/Paul-Graham-Selected-Essays-B5-Vol-2.pdf
+            dist/release/Paul-Graham-Selected-Essays-B5-Vol-3.pdf
             dist/release/essays.csv
             dist/release/excluded_essays.csv
             dist/release/selection.json
             dist/release/build_summary.json
+            dist/release/b5-volume-plan.json
+            dist/release/b5-volume-summary.json
             dist/release/SHA256SUMS.txt
