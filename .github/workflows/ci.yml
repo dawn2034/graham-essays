@@ -24,6 +24,7 @@ on:
       - 'vol_1.png'
       - 'vol_2.png'
       - 'vol_3.png'
+      - 'paul-graham-three-volume-spines-final.PNG'
   pull_request:
     branches: [main]
   schedule:
@@ -81,6 +82,7 @@ jobs:
           cp vol_1.png dist/release/Paul-Graham-Selected-Essays-B5-Vol-1-Cover.png
           cp vol_2.png dist/release/Paul-Graham-Selected-Essays-B5-Vol-2-Cover.png
           cp vol_3.png dist/release/Paul-Graham-Selected-Essays-B5-Vol-3-Cover.png
+          cp paul-graham-three-volume-spines-final.PNG dist/release/Paul-Graham-Three-Volume-Spines-Final.PNG
           cp essays.csv excluded_essays.csv selection.json theme-volumes.json build_summary.json dist/release/
           cp dist/theme-volumes/theme-volume-plan.json dist/theme-volumes/theme-volume-summary.json dist/release/
 
@@ -115,6 +117,7 @@ jobs:
               f"- Source-index entries: {build['source_index_count']}",
               '- Single-volume formats: EPUB 3, A5 PDF, ISO B5 PDF, A4 PDF',
               '- Themed print set: three independent ISO B5 volumes with dedicated cover artwork',
+              '- Final print spine artwork: Paul-Graham-Three-Volume-Spines-Final.PNG',
               '',
           ]
           for volume in themes['volumes']:
