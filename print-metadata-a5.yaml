@@ -6,7 +6,7 @@ classoption:
   - twoside
   - openany
 papersize: a5
-mainfont: Noto Serif
+mainfont: TeX Gyre Pagella
 sansfont: Noto Sans
 monofont: DejaVu Sans Mono
 geometry:
